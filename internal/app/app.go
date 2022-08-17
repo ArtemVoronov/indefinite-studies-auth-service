@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/db"
+	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/db"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"

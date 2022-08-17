@@ -7,7 +7,9 @@ import (
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/ping"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/app"
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/db"
+	authService "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/auth"
+	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/db"
+	profilesService "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/profiles"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +17,8 @@ import (
 func main() {
 
 	app.InitEnv()
-	auth.Setup()
+	authService.Setup()
+	profilesService.Setup()
 	host := app.GetHost()
 
 	router := gin.Default()
@@ -38,8 +41,7 @@ func main() {
 	db.GetInstance()
 
 	// TODO: add permission controller by user role and user state
-	// v1 := router.Group("/api/v1", gin.BasicAuth(apiUsers)) // TODO: add auth via jwt, update model accordingly
-	v1 := router.Group("/api/v1") // TODO: add auth via jwt, update model accordingly
+	v1 := router.Group("/api/v1")
 
 	v1.GET("/ping", ping.Ping)
 	v1.POST("/auth/login", auth.Authenicate)

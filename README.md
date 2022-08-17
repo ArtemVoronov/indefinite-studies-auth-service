@@ -25,6 +25,9 @@ JWT_ISSUER=crazyprincipal
 
 #required for nginx
 HOST_API=192.168.0.18
+
+#external services
+PROFILES_SERVICE_BASE_URL=http://192.168.0.18
 ```
 2. Check `docker-compose.yml` is appropriate to config that you are going to use (e.g.`docker-compose config`)
 3. Build images: `docker-compose build`

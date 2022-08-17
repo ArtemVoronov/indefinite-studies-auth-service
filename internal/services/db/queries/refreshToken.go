@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/db/entities"
+	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/db/entities"
 )
 
 func GetRefreshTokenByToken(tx *sql.Tx, ctx context.Context, token string) (entities.RefreshToken, error) {
