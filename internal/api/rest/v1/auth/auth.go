@@ -272,7 +272,7 @@ func checkUserCredentials(authenicationDTO AuthenicationDTO) (CredentialsValidat
 	}
 
 	// TODO: get profiles-service URL from discovery-service
-	req, err := http.NewRequest(http.MethodPut, "http://localhost/api/v1/users/credentials:validate", bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPut, "http://192.168.0.18/api/v1/users/credentials:validate", bytes.NewBuffer(body))
 	if err != nil {
 		return result, fmt.Errorf("unable to check credentials : %s", err)
 	}
@@ -282,6 +282,7 @@ func checkUserCredentials(authenicationDTO AuthenicationDTO) (CredentialsValidat
 	if err != nil {
 		return result, fmt.Errorf("unable to check credentials : %s", err)
 	}
+	fmt.Printf("--------resp: %v\n", resp)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
@@ -300,6 +301,8 @@ func checkUserCredentials(authenicationDTO AuthenicationDTO) (CredentialsValidat
 	// if !ok {
 	// 	return result, fmt.Errorf("unable to check credentials : %s", api.ERROR_ASSERT_RESULT_TYPE)
 	// }
+
+	fmt.Printf("--------result: %v\n", result)
 
 	return result, nil
 }

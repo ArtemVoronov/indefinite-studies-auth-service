@@ -22,6 +22,9 @@ JWT_SIGN=f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2
 JWT_ACCESS_DURATION_IN_SECONDS=1800 # 30 min
 JWT_REFRESH_DURATION_IN_SECONDS=2592000 # 30 days
 JWT_ISSUER=crazyprincipal
+
+#required for nginx
+HOST_API=192.168.0.18
 ```
 2. Check `docker-compose.yml` is appropriate to config that you are going to use (e.g.`docker-compose config`)
 3. Build images: `docker-compose build`
