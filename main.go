@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-contrib/expvar"
-
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/ping"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/app"
@@ -46,12 +44,7 @@ func main() {
 	v1.GET("/ping", ping.Ping)
 	v1.POST("/auth/login", auth.Authenicate)
 	v1.POST("/auth/refresh-token", auth.RefreshToken)
-	authorized := router.Group("/api/v1")
-	authorized.Use(app.AuthReqired())
-	{
-		authorized.GET("/debug/vars", expvar.Handler())
-		authorized.GET("/safe-ping", ping.SafePing)
-	}
+	v1.POST("/auth/verify-token", auth.VerifyToken)
 
 	app.StartServer(host, router)
 }

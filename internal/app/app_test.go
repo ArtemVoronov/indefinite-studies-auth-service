@@ -6,12 +6,12 @@ package app_test
 import (
 	"testing"
 
-	"github.com/ArtemVoronov/indefinite-studies-api/internal/app"
+	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDefaultHost(t *testing.T) {
-	expected := ":3000"
+	expected := ":3005"
 
 	actual := app.GetHost()
 

@@ -8,8 +8,8 @@ RUN go mod download && go mod verify
 
 COPY . ./
 
-RUN go build -o ./indefinite-studies-api
+RUN go build -o ./indefinite-studies-auth-service
 
 EXPOSE 3000
 
-CMD [ "./indefinite-studies-api" ]
+CMD [ "./indefinite-studies-auth-service" ]

@@ -1,9 +1,12 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
@@ -35,9 +38,10 @@ func Setup() {
 }
 
 type CredentialsValidationResult struct {
-	userId  int
-	isValid bool
+	UserId  int  `json:"userId" binding:"required,email"`
+	IsValid bool `json:"isValid" binding:"required"`
 }
+
 type TokenValidationResult struct {
 	IsValid   bool
 	IsExpired bool
@@ -50,7 +54,12 @@ type AuthenicationDTO struct {
 }
 
 type VerificationDTO struct {
-	Token string `json:"token" binding:"required"`
+	AccessToken string `json:"accessToken" binding:"required"`
+}
+
+type VerificationResult struct {
+	IsValid   bool
+	IsExpired bool
 }
 
 type AuthenicationResultDTO struct {
@@ -78,18 +87,18 @@ func Authenicate(c *gin.Context) {
 	}
 
 	// TODO: add counter of invalid athorizations, then use it for temporary blocking access
-	validatoionResult, err := checkUserCredentials(authenicationDTO.Email, authenicationDTO.Password)
+	validatoionResult, err := checkUserCredentials(authenicationDTO)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
 		log.Printf("error during authenication: %v\n", err)
 		return
 	}
-	if !validatoionResult.isValid || validatoionResult.userId == -1 {
+	if !validatoionResult.IsValid || validatoionResult.UserId == -1 {
 		c.JSON(http.StatusBadRequest, api.ERROR_WRONG_PASSWORD_OR_EMAIL)
 		return
 	}
 
-	result, err := generateNewTokenPair(validatoionResult.userId)
+	result, err := generateNewTokenPair(validatoionResult.UserId)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
@@ -98,10 +107,10 @@ func Authenicate(c *gin.Context) {
 	}
 
 	err = db.TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
-		err := queries.UpdateRefreshToken(tx, ctx, validatoionResult.userId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
+		err := queries.UpdateRefreshToken(tx, ctx, validatoionResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 
 		if err == sql.ErrNoRows {
-			err = queries.CreateRefreshToken(tx, ctx, validatoionResult.userId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
+			err = queries.CreateRefreshToken(tx, ctx, validatoionResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 		}
 
 		return err
@@ -124,7 +133,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	validationResult, err := Verify(refreshToken.RefreshToken)
+	validationResult, err := validate(refreshToken.RefreshToken)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal Server Error")
@@ -211,7 +220,7 @@ func createToken(expireAt *jwt.NumericDate, userId int, subject string) (string,
 	return signedToken, err
 }
 
-func Verify(token string) (*TokenValidationResult, error) {
+func validate(token string) (*TokenValidationResult, error) {
 	t, err := jwt.ParseWithClaims(token, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return hmacSecret, nil
 	})
@@ -226,24 +235,71 @@ func Verify(token string) (*TokenValidationResult, error) {
 	return &TokenValidationResult{IsValid: true, IsExpired: false, token: t}, nil
 }
 
-func checkUserCredentials(email string, password string) (CredentialsValidationResult, error) {
+func VerifyToken(c *gin.Context) {
+	var verification VerificationDTO
+
+	if err := c.ShouldBindJSON(&verification); err != nil {
+		validation.ProcessAndSendValidationErrorMessage(c, err)
+		return
+	}
+
+	validationResult, err := validate(verification.AccessToken)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, "Internal Server Error")
+		log.Printf("error during refreshing token: %v\n", err)
+		return
+	}
+
+	if (*validationResult).IsExpired {
+		c.JSON(http.StatusBadRequest, api.ERROR_TOKEN_IS_EXPIRED)
+		return
+	}
+
+	// TODO: make some complex analysis based on claims in future, e.g. check the role, permission etc
+
+	c.JSON(http.StatusOK, &VerificationResult{IsValid: validationResult.IsValid, IsExpired: validationResult.IsExpired})
+}
+
+func checkUserCredentials(authenicationDTO AuthenicationDTO) (CredentialsValidationResult, error) {
 	var result CredentialsValidationResult
+	// TODO: unify http client calls to utils and reuse it
+	client := &http.Client{}
 
-	// TODO: get profiles-service URL from discovery-service
-	// TODO: make HTTP call to profiles-service
-	data, err := db.Tx(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) (any, error) {
-		userId, isValid, err := queries.IsValidCredentials(tx, ctx, email, utils.CreateSHA512HashHexEncoded(password))
-		return CredentialsValidationResult{userId: userId, isValid: isValid}, err
-	})()
-
-	if err != nil && err != sql.ErrNoRows {
+	body, err := json.Marshal(authenicationDTO)
+	if err != nil {
 		return result, fmt.Errorf("unable to check credentials : %s", err)
 	}
 
-	result, ok := data.(CredentialsValidationResult)
-	if !ok {
-		return result, fmt.Errorf("unable to check credentials : %s", api.ERROR_ASSERT_RESULT_TYPE)
+	// TODO: get profiles-service URL from discovery-service
+	req, err := http.NewRequest(http.MethodPut, "http://localhost/api/v1/users/credentials:validate", bytes.NewBuffer(body))
+	if err != nil {
+		return result, fmt.Errorf("unable to check credentials : %s", err)
 	}
+
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err := client.Do(req)
+	if err != nil {
+		return result, fmt.Errorf("unable to check credentials : %s", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return result, fmt.Errorf("unable to check credentials : not ok response")
+	}
+
+	resBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return result, fmt.Errorf("unable to check credentials : %s", err)
+	}
+	err = json.Unmarshal(resBody, &result)
+	if err != nil {
+		return result, fmt.Errorf("unable to check credentials : %s", err)
+	}
+	// result, ok := data.(CredentialsValidationResult)
+	// if !ok {
+	// 	return result, fmt.Errorf("unable to check credentials : %s", api.ERROR_ASSERT_RESULT_TYPE)
+	// }
 
 	return result, nil
 }

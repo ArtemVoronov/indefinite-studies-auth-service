@@ -3,9 +3,7 @@ module github.com/ArtemVoronov/indefinite-studies-auth-service
 go 1.18
 
 require (
-	github.com/ArtemVoronov/indefinite-studies-api v0.0.0-20220729161732-41f7956aa398
-	github.com/ArtemVoronov/indefinite-studies-utils v0.0.0-00010101000000-000000000000
-	github.com/gin-contrib/expvar v0.0.1
+	github.com/ArtemVoronov/indefinite-studies-utils v0.0.0-20220816052713-405042ce7636
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/joho/godotenv v1.4.0
@@ -37,4 +35,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/ArtemVoronov/indefinite-studies-utils => ../indefinite-studies-utils // TODO remove after publishing
+// replace github.com/ArtemVoronov/indefinite-studies-utils => ../indefinite-studies-utils // TODO remove after publishing
