@@ -1,4 +1,4 @@
-package auth
+package jwt
 
 import (
 	"fmt"
@@ -54,32 +54,49 @@ const (
 	PROFILES_SERVICE_ID = -2
 )
 
-var hmacSecret []byte
-var accessTokenDuration time.Duration
-var refreshTokenDuration time.Duration
-var tokenIssuer string
-var once sync.Once
-
-func Setup() {
-	once.Do(func() {
-		hmacSecret = utils.EnvVarBytes("JWT_SIGN")
-		accessTokenDuration = utils.EnvVarDuration("JWT_ACCESS_DURATION_IN_SECONDS", time.Second)
-		refreshTokenDuration = utils.EnvVarDuration("JWT_REFRESH_DURATION_IN_SECONDS", time.Second)
-		tokenIssuer = utils.EnvVar("JWT_ISSUER")
-	})
+type JWTService struct {
+	hmacSecret           []byte
+	accessTokenDuration  time.Duration
+	refreshTokenDuration time.Duration
+	tokenIssuer          string
 }
 
-func GenerateNewTokenPair(id int, tokenType string) (*AuthenicationResultDTO, error) {
-	var result *AuthenicationResultDTO
-	expireAtForAccessToken := jwt.NewNumericDate(time.Now().Add(accessTokenDuration))
-	expireAtForRefreshToken := jwt.NewNumericDate(time.Now().Add(refreshTokenDuration))
+var once sync.Once
+var instance *JWTService
 
-	accessToken, err := createToken(expireAtForAccessToken, id, tokenType, "access")
+func Instance() *JWTService {
+	once.Do(func() {
+		if instance == nil {
+			instance = createJWTService()
+		}
+	})
+	return instance
+}
+
+func createJWTService() *JWTService {
+	return &JWTService{
+		hmacSecret:           utils.EnvVarBytes("JWT_SIGN"),
+		accessTokenDuration:  utils.EnvVarDuration("JWT_ACCESS_DURATION_IN_SECONDS", time.Second),
+		refreshTokenDuration: utils.EnvVarDuration("JWT_REFRESH_DURATION_IN_SECONDS", time.Second),
+		tokenIssuer:          utils.EnvVar("JWT_ISSUER"),
+	}
+}
+
+func (s *JWTService) Shutdown() error {
+	return nil
+}
+
+func (s *JWTService) GenerateNewTokenPair(id int, tokenType string) (*AuthenicationResultDTO, error) {
+	var result *AuthenicationResultDTO
+	expireAtForAccessToken := jwt.NewNumericDate(time.Now().Add(s.accessTokenDuration))
+	expireAtForRefreshToken := jwt.NewNumericDate(time.Now().Add(s.refreshTokenDuration))
+
+	accessToken, err := s.createToken(expireAtForAccessToken, id, tokenType, "access")
 	if err != nil {
 		return result, fmt.Errorf("error token pair generation: %v", err)
 	}
 
-	refreshToken, err := createToken(expireAtForRefreshToken, id, tokenType, "refresh")
+	refreshToken, err := s.createToken(expireAtForRefreshToken, id, tokenType, "refresh")
 	if err != nil {
 		return result, fmt.Errorf("error token pair generation: %v", err)
 	}
@@ -94,26 +111,26 @@ func GenerateNewTokenPair(id int, tokenType string) (*AuthenicationResultDTO, er
 	return result, nil
 }
 
-func createToken(expireAt *jwt.NumericDate, id int, tokenType string, subject string) (string, error) {
+func (s *JWTService) createToken(expireAt *jwt.NumericDate, id int, tokenType string, subject string) (string, error) {
 	claims := UserClaims{
 		id,
 		tokenType,
 		jwt.RegisteredClaims{
 			ExpiresAt: expireAt,
-			Issuer:    tokenIssuer,
+			Issuer:    s.tokenIssuer,
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   subject,
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	signedToken, err := token.SignedString(hmacSecret)
+	signedToken, err := token.SignedString(s.hmacSecret)
 	return signedToken, err
 }
 
-func Validate(token string) (*TokenValidationResult, error) {
+func (s *JWTService) Validate(token string) (*TokenValidationResult, error) {
 	t, err := jwt.ParseWithClaims(token, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return hmacSecret, nil
+		return s.hmacSecret, nil
 	})
 
 	if err != nil {
