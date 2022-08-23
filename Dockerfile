@@ -10,6 +10,4 @@ COPY . ./
 
 RUN go build -o ./indefinite-studies-auth-service
 
-EXPOSE 3000
-
 CMD [ "./indefinite-studies-auth-service" ]
