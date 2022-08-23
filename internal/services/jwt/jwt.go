@@ -76,8 +76,8 @@ func Instance() *JWTService {
 func createJWTService() *JWTService {
 	return &JWTService{
 		hmacSecret:           utils.EnvVarBytes("JWT_SIGN"),
-		accessTokenDuration:  utils.EnvVarDuration("JWT_ACCESS_DURATION_IN_SECONDS", time.Second),
-		refreshTokenDuration: utils.EnvVarDuration("JWT_REFRESH_DURATION_IN_SECONDS", time.Second),
+		accessTokenDuration:  utils.EnvVarDurationDefault("JWT_ACCESS_DURATION_IN_SECONDS", time.Second, 30*time.Second),
+		refreshTokenDuration: utils.EnvVarDurationDefault("JWT_REFRESH_DURATION_IN_SECONDS", time.Second, 30*time.Second),
 		tokenIssuer:          utils.EnvVar("JWT_ISSUER"),
 	}
 }
