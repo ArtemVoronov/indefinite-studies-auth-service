@@ -6,10 +6,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/db"
+	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/db/queries"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/profiles"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/api"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/api/validation"
 	"github.com/gin-gonic/gin"
@@ -24,7 +23,7 @@ func Authenicate(c *gin.Context) {
 	}
 
 	// TODO: add counter of invalid athorizations, then use it for temporary blocking access
-	validatoionResult, err := profiles.Instance().ValidateCredentials(authenicationDTO)
+	validatoionResult, err := services.Instance().Profiles().ValidateCredentials(authenicationDTO)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
 		log.Printf("error during authenication: %v\n", err)
@@ -35,7 +34,7 @@ func Authenicate(c *gin.Context) {
 		return
 	}
 
-	result, err := jwt.Instance().GenerateNewTokenPair(validatoionResult.UserId, jwt.TOKEN_TYPE_USER)
+	result, err := services.Instance().JWT().GenerateNewTokenPair(validatoionResult.UserId, jwt.TOKEN_TYPE_USER)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
@@ -43,7 +42,7 @@ func Authenicate(c *gin.Context) {
 		return
 	}
 
-	err = db.Instance().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
+	err = services.Instance().DB().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
 		err := queries.UpdateRefreshToken(tx, ctx, validatoionResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 
 		if err == sql.ErrNoRows {
@@ -70,7 +69,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	validationResult, err := jwt.Instance().Validate(refreshToken.RefreshToken)
+	validationResult, err := services.Instance().JWT().Validate(refreshToken.RefreshToken)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal Server Error")
@@ -90,7 +89,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	result, err := jwt.Instance().GenerateNewTokenPair(claims.Id, claims.Type)
+	result, err := services.Instance().JWT().GenerateNewTokenPair(claims.Id, claims.Type)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
@@ -98,7 +97,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	err = db.Instance().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
+	err = services.Instance().DB().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
 		err := queries.UpdateRefreshToken(tx, ctx, claims.Id, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 		if err == sql.ErrNoRows {
 			err = queries.CreateRefreshToken(tx, ctx, claims.Id, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
@@ -124,7 +123,7 @@ func VerifyToken(c *gin.Context) {
 		return
 	}
 
-	validationResult, err := jwt.Instance().Validate(verification.AccessToken)
+	validationResult, err := services.Instance().JWT().Validate(verification.AccessToken)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal Server Error")

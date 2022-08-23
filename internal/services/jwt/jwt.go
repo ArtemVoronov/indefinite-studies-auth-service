@@ -3,7 +3,6 @@ package jwt
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/utils"
@@ -61,19 +60,7 @@ type JWTService struct {
 	tokenIssuer          string
 }
 
-var once sync.Once
-var instance *JWTService
-
-func Instance() *JWTService {
-	once.Do(func() {
-		if instance == nil {
-			instance = createJWTService()
-		}
-	})
-	return instance
-}
-
-func createJWTService() *JWTService {
+func CreateJWTService() *JWTService {
 	return &JWTService{
 		hmacSecret:           utils.EnvVarBytes("JWT_SIGN"),
 		accessTokenDuration:  utils.EnvVarDurationDefault("JWT_ACCESS_DURATION_IN_SECONDS", time.Second, 30*time.Second),

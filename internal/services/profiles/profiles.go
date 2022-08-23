@@ -5,13 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
-	"sync"
-	"time"
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
-	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/utils"
 )
 
 type CredentialsValidationResult struct {
@@ -19,49 +15,21 @@ type CredentialsValidationResult struct {
 	IsValid bool `json:"isValid" binding:"required"`
 }
 
-// var profilesServiceBaseURL string
-// var validateCredentialsURL string
-// var accessTokenForAuthService string
-// var once sync.Once
-
 type ProfilesService struct {
+	jwt                    *jwt.JWTService
 	client                 *http.Client
 	accessToken            string
 	baseURL                string
 	validateCredentialsURL string
 }
 
-var once sync.Once
-var instance *ProfilesService
-
-// TODO: move settings to .env
-var client *http.Client = &http.Client{
-	Timeout: time.Second * 30,
-	Transport: &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout: 10 * time.Second,
-	},
-}
-
-func Instance() *ProfilesService {
-	once.Do(func() {
-		if instance == nil {
-			instance = createProfilesService(client, utils.EnvVar("PROFILES_SERVICE_BASE_URL"))
-		}
-	})
-	return instance
-}
-
-// TODO: make public costructor, move to utils project
-func createProfilesService(client *http.Client, baseUrl string) *ProfilesService {
-	pair, err := jwt.Instance().GenerateNewTokenPair(jwt.AUTH_SERVICE_ID, jwt.TOKEN_TYPE_SERVICE)
+func CreateProfilesService(client *http.Client, baseUrl string, jwtService *jwt.JWTService) *ProfilesService {
+	pair, err := jwtService.GenerateNewTokenPair(jwt.AUTH_SERVICE_ID, jwt.TOKEN_TYPE_SERVICE)
 	if err != nil {
 		panic("unable to generate jwt for auth service")
 	}
 	return &ProfilesService{
+		jwt:                    jwtService,
 		client:                 client,
 		accessToken:            pair.AccessToken,
 		baseURL:                baseUrl,
@@ -89,7 +57,7 @@ func (s *ProfilesService) ValidateCredentials(authenicationDTO jwt.Authenication
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Authorization", "Bearer "+s.accessToken)
 
-	resp, err := client.Do(req)
+	resp, err := s.client.Do(req)
 	if err != nil {
 		return result, fmt.Errorf("unable to validate credentials: %s", err)
 	}
@@ -97,7 +65,7 @@ func (s *ProfilesService) ValidateCredentials(authenicationDTO jwt.Authenication
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 401 {
-		pair, err := jwt.Instance().GenerateNewTokenPair(jwt.AUTH_SERVICE_ID, jwt.TOKEN_TYPE_SERVICE)
+		pair, err := s.jwt.GenerateNewTokenPair(jwt.AUTH_SERVICE_ID, jwt.TOKEN_TYPE_SERVICE)
 		if err != nil {
 			return result, fmt.Errorf("unable to validate credentials: %s", err)
 		}

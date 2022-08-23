@@ -6,9 +6,7 @@ import (
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/ping"
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/db"
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/profiles"
+	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/app"
 	"github.com/gin-gonic/gin"
 )
@@ -18,15 +16,11 @@ func Start() {
 }
 
 func setup() {
-	db.Instance()
-	jwt.Instance()
-	profiles.Instance()
+	services.Instance()
 }
 
 func shutdown() {
-	db.Instance().Shutdown()
-	jwt.Instance().Shutdown()
-	profiles.Instance().Shutdown()
+	services.Instance().Shutdown()
 }
 
 func router() *gin.Engine {
