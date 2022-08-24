@@ -10,8 +10,9 @@ import (
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
 )
 
+// TODO: delete this implementation
 type CredentialsValidationResult struct {
-	UserId  int  `json:"userId" binding:"required,email"`
+	UserId  int  `json:"userId" binding:"required"`
 	IsValid bool `json:"isValid" binding:"required"`
 }
 

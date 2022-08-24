@@ -4,15 +4,31 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
+	authRestApi "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/ping"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/app"
+	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/auth"
+	authGRPC "github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/auth"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 )
 
+type server struct {
+	authGRPC.UnimplementedAuthServiceServer
+}
+
 func Start() {
-	app.Start(setup, shutdown, app.Host(), router())
+	app.LoadEnv()
+	serviceServer := &server{}
+
+	registerServices := func(s *grpc.Server) {
+		auth.RegisterAuthServiceServer(s, serviceServer)
+	}
+	go func() {
+		app.StartGRPC(setup, shutdown, app.HostGRPC(), registerServices)
+	}()
+	app.StartHTTP(setup, shutdown, app.HostHTTP(), router())
 }
 
 func setup() {
@@ -41,9 +57,9 @@ func router() *gin.Engine {
 	v1 := router.Group("/api/v1")
 
 	v1.GET("/ping", ping.Ping)
-	v1.POST("/auth/login", auth.Authenicate)
-	v1.POST("/auth/refresh-token", auth.RefreshToken)
-	v1.POST("/auth/verify-token", auth.VerifyToken)
+	v1.POST("/auth/login", authRestApi.Authenicate)
+	v1.POST("/auth/refresh-token", authRestApi.RefreshToken)
+	v1.POST("/auth/verify-token", authRestApi.VerifyToken)
 
 	return router
 }

@@ -6,15 +6,17 @@ import (
 	"time"
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/profiles"
+	profilesREST "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/profiles"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/db"
+	profilesGRPC "github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/profiles"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/utils"
 )
 
 type Services struct {
-	profiles *profiles.ProfilesService
-	jwt      *jwt.JWTService
-	db       *db.PostgreSQLService
+	profilesREST *profilesREST.ProfilesService
+	profilesGRPC *profilesGRPC.ProfilesGRPCService
+	jwt          *jwt.JWTService
+	db           *db.PostgreSQLService
 }
 
 var once sync.Once
@@ -35,14 +37,16 @@ func createServices() *Services {
 	}
 	jwtService := jwt.CreateJWTService()
 	return &Services{
-		profiles: profiles.CreateProfilesService(client, utils.EnvVar("PROFILES_SERVICE_BASE_URL"), jwtService),
-		jwt:      jwtService,
-		db:       db.CreatePostgreSQLService(),
+		profilesREST: profilesREST.CreateProfilesService(client, utils.EnvVar("PROFILES_SERVICE_URL"), jwtService),
+		profilesGRPC: profilesGRPC.CreateProfilesGRPCService(utils.EnvVar("PROFILES_SERVICE_GRPC_HOST") + ":" + utils.EnvVar("PROFILES_SERVICE_GRPC_PORT")),
+		jwt:          jwtService,
+		db:           db.CreatePostgreSQLService(),
 	}
 }
 
 func (s *Services) Shutdown() {
-	s.profiles.Shutdown()
+	s.profilesREST.Shutdown()
+	s.profilesGRPC.Shutdown()
 	s.jwt.Shutdown()
 	s.db.Shutdown()
 }
@@ -55,6 +59,10 @@ func (s *Services) JWT() *jwt.JWTService {
 	return s.jwt
 }
 
-func (s *Services) Profiles() *profiles.ProfilesService {
-	return s.profiles
+func (s *Services) ProfilesREST() *profilesREST.ProfilesService {
+	return s.profilesREST
+}
+
+func (s *Services) ProfilesGRPC() *profilesGRPC.ProfilesGRPCService {
+	return s.profilesGRPC
 }
