@@ -30,7 +30,9 @@ JWT_ISSUER=crazyprincipal
 HOST_API=192.168.0.18
 
 #external services
-PROFILES_SERVICE_BASE_URL=http://192.168.0.18
+PROFILES_SERVICE_URL=http://192.168.0.18
+PROFILES_SERVICE_GRPC_HOST=192.168.0.18
+PROFILES_SERVICE_GRPC_PORT=50051
 
 #http client
 HTTP_CLIENT_REQUEST_TIMEOUT_IN_SECONDS=30 # connection time, any redirects, and reading the response body
