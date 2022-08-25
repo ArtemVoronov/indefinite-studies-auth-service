@@ -1,55 +1,25 @@
 package app
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"net/http"
 
-	authRestApi "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
+	authREST "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/ping"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services"
+	authGRPC "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/auth"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/app"
-	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/auth"
-	authGRPC "github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/auth"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 )
 
-// TODO: unify gRPC implementation
-type server struct {
-	authGRPC.UnimplementedAuthServiceServer
-}
-
-func (s *server) VerifyToken(ctx context.Context, in *authGRPC.VerifyTokenRequest) (*authGRPC.VerifyTokenReply, error) {
-	log.Printf("Token: %v", in.GetToken()) // todo clean
-
-	result, err := services.Instance().JWT().Validate(in.GetToken())
-	if err != nil {
-		return nil, err
-	}
-
-	return &authGRPC.VerifyTokenReply{IsValid: result.IsValid, IsExpired: result.IsExpired}, nil
-}
-
 func Start() {
 	app.LoadEnv()
-	serviceServer := &server{}
-
-	registerServices := func(s *grpc.Server) {
-		auth.RegisterAuthServiceServer(s, serviceServer)
-	}
-
-	// TODO: add env var with paths to certs
-	creds, err := app.LoadTLSCredentialsForServer("configs/tls/server-cert.pem", "configs/tls/server-key.pem")
-	if err != nil {
-		log.Fatalf("unable to load TLS credentials")
-	}
-
+	creds := app.TLSCredentials()
 	go func() {
-		app.StartGRPC(setup, shutdown, app.HostGRPC(), registerServices, &creds)
+		app.StartGRPC(setup, shutdown, app.HostGRPC(), createGrpcApi, &creds)
 	}()
-	app.StartHTTP(setup, shutdown, app.HostHTTP(), router())
+	app.StartHTTP(setup, shutdown, app.HostHTTP(), createRestApi())
 }
 
 func setup() {
@@ -60,13 +30,11 @@ func shutdown() {
 	services.Instance().Shutdown()
 }
 
-func router() *gin.Engine {
+func createRestApi() *gin.Engine {
 	router := gin.Default()
 	gin.SetMode(app.Mode())
 	router.Use(app.Cors())
 	router.Use(gin.Logger())
-
-	// Recovery middleware recovers from any panics and writes a 500 if there was one.
 	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
 		if err, ok := recovered.(string); ok {
 			c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
@@ -78,9 +46,13 @@ func router() *gin.Engine {
 	v1 := router.Group("/api/v1")
 
 	v1.GET("/ping", ping.Ping)
-	v1.POST("/auth/login", authRestApi.Authenicate)
-	v1.POST("/auth/refresh-token", authRestApi.RefreshToken)
-	v1.POST("/auth/verify-token", authRestApi.VerifyToken)
+	v1.POST("/auth/login", authREST.Authenicate)
+	v1.POST("/auth/refresh-token", authREST.RefreshToken)
+	v1.POST("/auth/verify-token", authREST.VerifyToken)
 
 	return router
+}
+
+func createGrpcApi(s *grpc.Server) {
+	authGRPC.RegisterServiceServer(s)
 }

@@ -23,7 +23,7 @@ func Authenicate(c *gin.Context) {
 	}
 
 	// TODO: add counter of invalid athorizations, then use it for temporary blocking access
-	validatoionResult, err := services.Instance().ProfilesGRPC().ValidateCredentials(authenicationDTO.Email, authenicationDTO.Password)
+	validatoionResult, err := services.Instance().Profiles().ValidateCredentials(authenicationDTO.Email, authenicationDTO.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
 		log.Printf("error during authenication: %v\n", err)
