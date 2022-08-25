@@ -6,6 +6,9 @@ APP_HTTP_API_PORT=3005
 APP_GRPC_API_PORT=50051
 APP_MODE=debug # release or debug
 APP_SHUTDOWN_TIMEOUT_IN_SECONDS=5
+APP_TLS_CERT_PATH=configs/tls/server-cert.pem
+APP_TLS_KEY_PATH=configs/tls/server-key.pem
+
 CORS='*'
 
 #required for db service inside app
@@ -30,9 +33,10 @@ JWT_ISSUER=crazyprincipal
 HOST_API=192.168.0.18
 
 #external services
-PROFILES_SERVICE_URL=http://192.168.0.18
 PROFILES_SERVICE_GRPC_HOST=192.168.0.18
-PROFILES_SERVICE_GRPC_PORT=50051
+PROFILES_SERVICE_GRPC_PORT=10003
+PROFILES_SERVICE_HTTP_PORT=10002
+PROFILES_SERVICE_CLIENT_TLS_CERT_PATH=configs/tls/ca-cert.pem
 
 #http client
 HTTP_CLIENT_REQUEST_TIMEOUT_IN_SECONDS=30 # connection time, any redirects, and reading the response body
