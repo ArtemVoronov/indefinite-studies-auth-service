@@ -1,12 +1,14 @@
 package services
 
 import (
+	"log"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
 	profilesREST "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/profiles"
+	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/app"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/db"
 	profilesGRPC "github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/profiles"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/utils"
@@ -35,10 +37,15 @@ func createServices() *Services {
 	client := &http.Client{
 		Timeout: utils.EnvVarDurationDefault("HTTP_CLIENT_REQUEST_TIMEOUT_IN_SECONDS", time.Second, 30*time.Second),
 	}
+	// TODO: add env var with paths to certs
+	creds, err := app.LoadTLSCredentialsForClient("configs/tls/ca-cert.pem")
+	if err != nil {
+		log.Fatalf("unable to load TLS credentials")
+	}
 	jwtService := jwt.CreateJWTService()
 	return &Services{
 		profilesREST: profilesREST.CreateProfilesService(client, utils.EnvVar("PROFILES_SERVICE_URL"), jwtService),
-		profilesGRPC: profilesGRPC.CreateProfilesGRPCService(utils.EnvVar("PROFILES_SERVICE_GRPC_HOST") + ":" + utils.EnvVar("PROFILES_SERVICE_GRPC_PORT")),
+		profilesGRPC: profilesGRPC.CreateProfilesGRPCService(utils.EnvVar("PROFILES_SERVICE_GRPC_HOST")+":"+utils.EnvVar("PROFILES_SERVICE_GRPC_PORT"), &creds),
 		jwt:          jwtService,
 		db:           db.CreatePostgreSQLService(),
 	}

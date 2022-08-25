@@ -3,7 +3,7 @@ module github.com/ArtemVoronov/indefinite-studies-auth-service
 go 1.18
 
 require (
-	github.com/ArtemVoronov/indefinite-studies-utils v0.0.0-20220824133427-9b5a032f4015
+	github.com/ArtemVoronov/indefinite-studies-utils v0.0.0-20220825105357-949fe5d50420
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/joho/godotenv v1.4.0

@@ -1,7 +1,9 @@
 package app
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	authRestApi "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
@@ -14,8 +16,20 @@ import (
 	"google.golang.org/grpc"
 )
 
+// TODO: unify gRPC implementation
 type server struct {
 	authGRPC.UnimplementedAuthServiceServer
+}
+
+func (s *server) VerifyToken(ctx context.Context, in *authGRPC.VerifyTokenRequest) (*authGRPC.VerifyTokenReply, error) {
+	log.Printf("Token: %v", in.GetToken()) // todo clean
+
+	result, err := services.Instance().JWT().Validate(in.GetToken())
+	if err != nil {
+		return nil, err
+	}
+
+	return &authGRPC.VerifyTokenReply{IsValid: result.IsValid, IsExpired: result.IsExpired}, nil
 }
 
 func Start() {
@@ -25,8 +39,15 @@ func Start() {
 	registerServices := func(s *grpc.Server) {
 		auth.RegisterAuthServiceServer(s, serviceServer)
 	}
+
+	// TODO: add env var with paths to certs
+	creds, err := app.LoadTLSCredentialsForServer("configs/tls/server-cert.pem", "configs/tls/server-key.pem")
+	if err != nil {
+		log.Fatalf("unable to load TLS credentials")
+	}
+
 	go func() {
-		app.StartGRPC(setup, shutdown, app.HostGRPC(), registerServices)
+		app.StartGRPC(setup, shutdown, app.HostGRPC(), registerServices, &creds)
 	}()
 	app.StartHTTP(setup, shutdown, app.HostHTTP(), router())
 }
