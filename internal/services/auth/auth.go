@@ -17,7 +17,7 @@ func RegisterServiceServer(s *grpc.Server) {
 }
 
 func (s *AuthServiceServer) VerifyToken(ctx context.Context, in *auth.VerifyTokenRequest) (*auth.VerifyTokenReply, error) {
-	result, err := services.Instance().JWT().Validate(in.GetToken())
+	result, err := services.Instance().JWT().VerifyToken(in.GetToken())
 	if err != nil {
 		return nil, err
 	}

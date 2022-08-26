@@ -69,7 +69,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	validationResult, err := services.Instance().JWT().Validate(refreshToken.RefreshToken)
+	validationResult, err := services.Instance().JWT().VerifyToken(refreshToken.RefreshToken)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal Server Error")
@@ -113,25 +113,4 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
-}
-
-func VerifyToken(c *gin.Context) {
-	var verification jwt.VerificationDTO
-
-	if err := c.ShouldBindJSON(&verification); err != nil {
-		validation.SendError(c, err)
-		return
-	}
-
-	validationResult, err := services.Instance().JWT().Validate(verification.AccessToken)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, "Internal Server Error")
-		log.Printf("error during refreshing token: %v\n", err)
-		return
-	}
-
-	// TODO: make some complex analysis based on claims in future, e.g. check the token type (user or service), permission etc
-
-	c.JSON(http.StatusOK, &jwt.VerificationResult{IsValid: validationResult.IsValid, IsExpired: validationResult.IsExpired})
 }

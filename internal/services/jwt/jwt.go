@@ -27,7 +27,7 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-type TokenValidationResult struct {
+type TokenVerificationResult struct {
 	IsValid   bool
 	IsExpired bool
 	Token     *jwt.Token
@@ -115,17 +115,17 @@ func (s *JWTService) createToken(expireAt *jwt.NumericDate, id int, tokenType st
 	return signedToken, err
 }
 
-func (s *JWTService) Validate(token string) (*TokenValidationResult, error) {
+func (s *JWTService) VerifyToken(token string) (*TokenVerificationResult, error) {
 	t, err := jwt.ParseWithClaims(token, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return s.hmacSecret, nil
 	})
 
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "token is expired") {
-			return &TokenValidationResult{IsValid: false, IsExpired: true}, nil
+			return &TokenVerificationResult{IsValid: false, IsExpired: true}, nil
 		}
 		return nil, err
 	}
 
-	return &TokenValidationResult{IsValid: true, IsExpired: false, Token: t}, nil
+	return &TokenVerificationResult{IsValid: true, IsExpired: false, Token: t}, nil
 }
