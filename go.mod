@@ -3,14 +3,14 @@ module github.com/ArtemVoronov/indefinite-studies-auth-service
 go 1.18
 
 require (
-	github.com/ArtemVoronov/indefinite-studies-utils v0.0.0-20220826035851-792c831985dd
+	github.com/ArtemVoronov/indefinite-studies-utils v0.0.0-20220831061825-a250df58c593
+	github.com/gin-contrib/expvar v0.0.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	google.golang.org/grpc v1.49.0
 )
 
 require (
-	github.com/gin-contrib/expvar v0.0.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
