@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	authGRPC "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/grpc/v1/auth"
 	authREST "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/auth"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/api/rest/v1/ping"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services"
-	authGRPC "github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/auth"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/app"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/auth"
 	"github.com/gin-contrib/expvar"
