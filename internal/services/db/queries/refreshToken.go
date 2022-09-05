@@ -51,7 +51,7 @@ func CreateRefreshToken(tx *sql.Tx, ctx context.Context, userId int, token strin
 
 	_, err = stmt.ExecContext(ctx, userId, token, expireAt, createDate)
 	if err != nil {
-		return fmt.Errorf("error at creating refresh token '%s' into db, case after QueryRow.Scan: %s", token, err)
+		return fmt.Errorf("error at creating refresh token '%s' into db, case after ExecContext: %s", token, err)
 	}
 
 	return nil
