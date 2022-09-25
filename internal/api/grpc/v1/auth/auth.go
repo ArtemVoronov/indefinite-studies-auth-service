@@ -38,5 +38,5 @@ func (s *AuthServiceServer) GetTokenClaims(ctx context.Context, in *auth.GetToke
 		return nil, fmt.Errorf("unable to parse token claims")
 	}
 
-	return &auth.GetTokenClaimsReply{Id: int32(claims.Id), Type: claims.Type}, nil
+	return &auth.GetTokenClaimsReply{Id: int32(claims.Id), Type: claims.Type, Role: claims.Role}, nil
 }

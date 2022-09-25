@@ -34,7 +34,7 @@ func Authenicate(c *gin.Context) {
 		return
 	}
 
-	result, err := services.Instance().JWT().GenerateNewTokenPair(validatoionResult.UserId, jwt.TOKEN_TYPE_USER)
+	result, err := services.Instance().JWT().GenerateNewTokenPair(validatoionResult.UserId, jwt.TOKEN_TYPE_USER, validatoionResult.Role)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
@@ -89,7 +89,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	result, err := services.Instance().JWT().GenerateNewTokenPair(claims.Id, claims.Type)
+	result, err := services.Instance().JWT().GenerateNewTokenPair(claims.Id, claims.Type, claims.Role)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")

@@ -24,6 +24,7 @@ type AuthenicationResultDTO struct {
 type UserClaims struct {
 	Id   int
 	Type string
+	Role string
 	jwt.RegisteredClaims
 }
 
@@ -73,17 +74,17 @@ func (s *JWTService) Shutdown() error {
 	return nil
 }
 
-func (s *JWTService) GenerateNewTokenPair(id int, tokenType string) (*AuthenicationResultDTO, error) {
+func (s *JWTService) GenerateNewTokenPair(id int, tokenType string, role string) (*AuthenicationResultDTO, error) {
 	var result *AuthenicationResultDTO
 	expireAtForAccessToken := jwt.NewNumericDate(time.Now().Add(s.accessTokenDuration))
 	expireAtForRefreshToken := jwt.NewNumericDate(time.Now().Add(s.refreshTokenDuration))
 
-	accessToken, err := s.createToken(expireAtForAccessToken, id, tokenType, "access")
+	accessToken, err := s.createToken(expireAtForAccessToken, id, tokenType, role, "access")
 	if err != nil {
 		return result, fmt.Errorf("error token pair generation: %v", err)
 	}
 
-	refreshToken, err := s.createToken(expireAtForRefreshToken, id, tokenType, "refresh")
+	refreshToken, err := s.createToken(expireAtForRefreshToken, id, tokenType, role, "refresh")
 	if err != nil {
 		return result, fmt.Errorf("error token pair generation: %v", err)
 	}
@@ -98,10 +99,11 @@ func (s *JWTService) GenerateNewTokenPair(id int, tokenType string) (*Authenicat
 	return result, nil
 }
 
-func (s *JWTService) createToken(expireAt *jwt.NumericDate, id int, tokenType string, subject string) (string, error) {
+func (s *JWTService) createToken(expireAt *jwt.NumericDate, id int, tokenType string, role string, subject string) (string, error) {
 	claims := UserClaims{
 		id,
 		tokenType,
+		role,
 		jwt.RegisteredClaims{
 			ExpiresAt: expireAt,
 			Issuer:    s.tokenIssuer,
