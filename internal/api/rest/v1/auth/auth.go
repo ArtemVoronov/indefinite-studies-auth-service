@@ -11,6 +11,7 @@ import (
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/api"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/api/validation"
+	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/db/entities"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,7 +35,7 @@ func Authenicate(c *gin.Context) {
 		return
 	}
 
-	result, err := services.Instance().JWT().GenerateNewTokenPair(validatoionResult.UserId, jwt.TOKEN_TYPE_USER, validatoionResult.Role)
+	result, err := services.Instance().JWT().GenerateNewTokenPair(validatoionResult.UserId, entities.TOKEN_TYPE_USER, validatoionResult.Role)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")

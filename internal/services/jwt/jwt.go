@@ -47,13 +47,6 @@ type RefreshTokenDTO struct {
 	RefreshToken string `json:"refreshToken" binding:"required"`
 }
 
-const (
-	TOKEN_TYPE_USER     = "USER"
-	TOKEN_TYPE_SERVICE  = "SERVICE"
-	AUTH_SERVICE_ID     = -1
-	PROFILES_SERVICE_ID = -2
-)
-
 type JWTService struct {
 	hmacSecret           []byte
 	accessTokenDuration  time.Duration

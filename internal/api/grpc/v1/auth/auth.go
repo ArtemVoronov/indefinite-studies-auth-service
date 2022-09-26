@@ -24,7 +24,18 @@ func (s *AuthServiceServer) VerifyToken(ctx context.Context, in *auth.VerifyToke
 		return nil, err
 	}
 
-	return &auth.VerifyTokenReply{IsValid: result.IsValid, IsExpired: result.IsExpired}, nil
+	claims, ok := result.Token.Claims.(*jwt.UserClaims)
+	if !ok {
+		return nil, fmt.Errorf("unable to parse token claims")
+	}
+
+	return &auth.VerifyTokenReply{
+		IsValid:   result.IsValid,
+		IsExpired: result.IsExpired,
+		Id:        int32(claims.Id),
+		Type:      claims.Type,
+		Role:      claims.Role,
+	}, nil
 }
 
 func (s *AuthServiceServer) GetTokenClaims(ctx context.Context, in *auth.GetTokenClaimsRequest) (*auth.GetTokenClaimsReply, error) {

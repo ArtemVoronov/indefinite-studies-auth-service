@@ -50,7 +50,7 @@ func createRestApi(logger *logrus.Logger) *gin.Engine {
 	router := gin.Default()
 	gin.SetMode(app.Mode())
 	router.Use(app.Cors())
-	router.Use(app.JSONLogMiddleware(logger))
+	router.Use(app.NewLoggerMiddleware(logger))
 	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
 		if err, ok := recovered.(string); ok {
 			c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
@@ -58,7 +58,6 @@ func createRestApi(logger *logrus.Logger) *gin.Engine {
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}))
 
-	// TODO: add permission controller by user role and user state
 	v1 := router.Group("/api/v1")
 
 	v1.GET("/auth/ping", ping.Ping)
@@ -68,8 +67,8 @@ func createRestApi(logger *logrus.Logger) *gin.Engine {
 	authorized := router.Group("/api/v1")
 	authorized.Use(app.AuthReqired(authenicate))
 	{
-		authorized.GET("/auth/debug/vars", expvar.Handler())
-		authorized.GET("/auth/safe-ping", ping.SafePing)
+		authorized.GET("/auth/debug/vars", app.RequiredOwnerRole(), expvar.Handler())
+		authorized.GET("/auth/safe-ping", app.RequiredOwnerRole(), ping.SafePing)
 	}
 	return router
 }
