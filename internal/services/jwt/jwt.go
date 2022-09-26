@@ -117,7 +117,7 @@ func (s *JWTService) VerifyToken(token string) (*TokenVerificationResult, error)
 
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "token is expired") {
-			return &TokenVerificationResult{IsValid: false, IsExpired: true}, nil
+			return &TokenVerificationResult{IsValid: false, IsExpired: true, Token: t}, nil
 		}
 		return nil, err
 	}
