@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"database/sql"
-	"log"
 	"net/http"
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services"
@@ -11,6 +10,7 @@ import (
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/api"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/api/validation"
+	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/log"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/db/entities"
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +27,7 @@ func Authenicate(c *gin.Context) {
 	validatoionResult, err := services.Instance().Profiles().ValidateCredentials(authenicationDTO.Email, authenicationDTO.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
-		log.Printf("error during authenication: %v\n", err)
+		log.Error("error during authenication", err.Error())
 		return
 	}
 	if !validatoionResult.IsValid || validatoionResult.UserId == -1 {
@@ -39,7 +39,7 @@ func Authenicate(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
-		log.Printf("error during authenication: %v\n", err)
+		log.Error("error during authenication", err.Error())
 		return
 	}
 
@@ -55,7 +55,7 @@ func Authenicate(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
-		log.Printf("error during authenication: %v\n", err)
+		log.Error("error during authenication", err.Error())
 		return
 	}
 
@@ -74,7 +74,7 @@ func RefreshToken(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal Server Error")
-		log.Printf("error during refreshing token: %v\n", err)
+		log.Error("error during refreshing token", err.Error())
 		return
 	}
 
@@ -86,15 +86,14 @@ func RefreshToken(c *gin.Context) {
 	claims, ok := (*validationResult).Token.Claims.(*jwt.UserClaims)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, "Unable to authenicate")
-		log.Printf("error during refreshing token: %v\n", api.ERROR_ASSERT_RESULT_TYPE)
+		log.Error("error during refreshing token", api.ERROR_ASSERT_RESULT_TYPE)
 		return
 	}
 
 	result, err := services.Instance().JWT().GenerateNewTokenPair(claims.Id, claims.Type, claims.Role)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
-		log.Printf("error during refreshing token: %v\n", err)
+		log.Error("error during refreshing token", err.Error())
 		return
 	}
 
@@ -109,7 +108,7 @@ func RefreshToken(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
-		log.Printf("error during refreshing token: %v\n", err)
+		log.Error("error during refreshing token", err.Error())
 		return
 	}
 

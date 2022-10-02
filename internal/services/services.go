@@ -1,11 +1,11 @@
 package services
 
 import (
-	"log"
 	"sync"
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/app"
+	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/log"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/db"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/profiles"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/utils"
@@ -32,7 +32,7 @@ func Instance() *Services {
 func createServices() *Services {
 	creds, err := app.LoadTLSCredentialsForClient(utils.EnvVar("PROFILES_SERVICE_CLIENT_TLS_CERT_PATH"))
 	if err != nil {
-		log.Fatalf("unable to load TLS credentials")
+		log.Fatalf("unable to load TLS credentials: %s", err)
 	}
 
 	jwtService := jwt.CreateJWTService()
