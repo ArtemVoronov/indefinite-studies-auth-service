@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
@@ -44,10 +45,24 @@ func createServices() *Services {
 	}
 }
 
-func (s *Services) Shutdown() {
-	s.profiles.Shutdown()
-	s.jwt.Shutdown()
-	s.db.Shutdown()
+func (s *Services) Shutdown() error {
+	result := []error{}
+	err := s.profiles.Shutdown()
+	if err != nil {
+		result = append(result, err)
+	}
+	err = s.jwt.Shutdown()
+	if err != nil {
+		result = append(result, err)
+	}
+	err = s.db.Shutdown()
+	if err != nil {
+		result = append(result, err)
+	}
+	if len(result) > 0 {
+		return fmt.Errorf("errors during shutdown: %v", result)
+	}
+	return nil
 }
 
 func (s *Services) DB() *db.PostgreSQLService {
