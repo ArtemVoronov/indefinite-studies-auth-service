@@ -23,7 +23,7 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        
+        <addUniqueConstraint tableName="refresh_tokens" columnNames="token" constraintName="refresh_tokens_token_unique" />        
         <rollback>
             <dropTable tableName="refresh_tokens"/>
         </rollback>

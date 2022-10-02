@@ -3,11 +3,14 @@ package queries
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/db/entities"
 )
+
+var ErrorRefreshTokenDuplicateKey = errors.New("pq: duplicate key value violates unique constraint \"refresh_tokens_token_unique\"")
 
 func GetRefreshTokenByToken(tx *sql.Tx, ctx context.Context, token string) (entities.RefreshToken, error) {
 	var refreshToken entities.RefreshToken
@@ -51,6 +54,9 @@ func CreateRefreshToken(tx *sql.Tx, ctx context.Context, userId int, token strin
 
 	_, err = stmt.ExecContext(ctx, userId, token, expireAt, createDate)
 	if err != nil {
+		if err.Error() == ErrorRefreshTokenDuplicateKey.Error() {
+			return ErrorRefreshTokenDuplicateKey
+		}
 		return fmt.Errorf("error at creating refresh token '%s' into db, case after ExecContext: %s", token, err)
 	}
 
