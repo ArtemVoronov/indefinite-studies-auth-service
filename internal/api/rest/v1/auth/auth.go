@@ -24,18 +24,18 @@ func Authenicate(c *gin.Context) {
 	}
 
 	// TODO: add counter of invalid athorizations, then use it for temporary blocking access
-	validatoionResult, err := services.Instance().Profiles().ValidateCredentials(authenicationDTO.Email, authenicationDTO.Password)
+	validationResult, err := services.Instance().Profiles().ValidateCredentials(authenicationDTO.Email, authenicationDTO.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
 		log.Error("error during authenication", err.Error())
 		return
 	}
-	if !validatoionResult.IsValid || validatoionResult.UserId == -1 {
+	if !validationResult.IsValid || validationResult.UserId == -1 {
 		c.JSON(http.StatusBadRequest, api.ERROR_WRONG_PASSWORD_OR_EMAIL)
 		return
 	}
 
-	result, err := services.Instance().JWT().GenerateNewTokenPair(validatoionResult.UserId, entities.TOKEN_TYPE_USER, validatoionResult.Role)
+	result, err := services.Instance().JWT().GenerateNewTokenPair(validationResult.UserId, entities.TOKEN_TYPE_USER, validationResult.Role)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
@@ -44,10 +44,10 @@ func Authenicate(c *gin.Context) {
 	}
 
 	err = services.Instance().DB().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
-		err := queries.UpdateRefreshToken(tx, ctx, validatoionResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
+		err := queries.UpdateRefreshToken(tx, ctx, validationResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 
 		if err == sql.ErrNoRows {
-			err = queries.CreateRefreshToken(tx, ctx, validatoionResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
+			err = queries.CreateRefreshToken(tx, ctx, validationResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 		}
 
 		return err
