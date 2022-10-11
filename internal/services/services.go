@@ -41,7 +41,7 @@ func createServices() *Services {
 	return &Services{
 		profiles: profiles.CreateProfilesGRPCService(utils.EnvVar("PROFILES_SERVICE_GRPC_HOST")+":"+utils.EnvVar("PROFILES_SERVICE_GRPC_PORT"), &creds),
 		jwt:      jwtService,
-		db:       db.CreatePostgreSQLService(),
+		db:       db.CreatePostgreSQLServiceDefault(),
 	}
 }
 
