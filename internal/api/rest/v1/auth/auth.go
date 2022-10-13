@@ -30,12 +30,12 @@ func Authenicate(c *gin.Context) {
 		log.Error("error during authenication", err.Error())
 		return
 	}
-	if !validationResult.IsValid || validationResult.UserId == -1 {
+	if !validationResult.IsValid || validationResult.UserUuid == "" {
 		c.JSON(http.StatusBadRequest, api.ERROR_WRONG_PASSWORD_OR_EMAIL)
 		return
 	}
 
-	result, err := services.Instance().JWT().GenerateNewTokenPair(validationResult.UserId, entities.TOKEN_TYPE_USER, validationResult.Role)
+	result, err := services.Instance().JWT().GenerateNewTokenPair(validationResult.UserUuid, entities.TOKEN_TYPE_USER, validationResult.Role)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
@@ -44,10 +44,10 @@ func Authenicate(c *gin.Context) {
 	}
 
 	err = services.Instance().DB().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
-		err := queries.UpdateRefreshToken(tx, ctx, validationResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
+		err := queries.UpdateRefreshToken(tx, ctx, validationResult.UserUuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 
 		if err == sql.ErrNoRows {
-			err = queries.CreateRefreshToken(tx, ctx, validationResult.UserId, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
+			err = queries.CreateRefreshToken(tx, ctx, validationResult.UserUuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 		}
 
 		return err
@@ -90,7 +90,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	result, err := services.Instance().JWT().GenerateNewTokenPair(claims.Id, claims.Type, claims.Role)
+	result, err := services.Instance().JWT().GenerateNewTokenPair(claims.Uuid, claims.Type, claims.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
 		log.Error("error during refreshing token", err.Error())
@@ -98,9 +98,9 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	err = services.Instance().DB().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
-		err := queries.UpdateRefreshToken(tx, ctx, claims.Id, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
+		err := queries.UpdateRefreshToken(tx, ctx, claims.Uuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 		if err == sql.ErrNoRows {
-			err = queries.CreateRefreshToken(tx, ctx, claims.Id, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
+			err = queries.CreateRefreshToken(tx, ctx, claims.Uuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 		}
 
 		return err
