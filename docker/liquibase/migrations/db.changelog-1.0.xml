@@ -13,7 +13,7 @@
             <column name="user_uuid" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="token" type="varchar(300)">
+            <column name="token" type="varchar(400)">
                 <constraints nullable="false"/>
             </column>
             <column name="expire_at" type="timestamp">
