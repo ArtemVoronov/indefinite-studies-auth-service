@@ -1,12 +1,9 @@
 package auth
 
 import (
-	"context"
-	"database/sql"
 	"net/http"
 
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services"
-	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/db/queries"
 	"github.com/ArtemVoronov/indefinite-studies-auth-service/internal/services/jwt"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/api"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/api/validation"
@@ -36,22 +33,13 @@ func Authenicate(c *gin.Context) {
 	}
 
 	result, err := services.Instance().JWT().GenerateNewTokenPair(validationResult.UserUuid, entities.TOKEN_TYPE_USER, validationResult.Role)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
 		log.Error("error during authenication", err.Error())
 		return
 	}
 
-	err = services.Instance().DB().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
-		err := queries.UpdateRefreshToken(tx, ctx, validationResult.UserUuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
-
-		if err == sql.ErrNoRows {
-			err = queries.CreateRefreshToken(tx, ctx, validationResult.UserUuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
-		}
-
-		return err
-	})()
+	err = services.Instance().Tokens().UpsertRefreshToken(validationResult.UserUuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
@@ -97,14 +85,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	err = services.Instance().DB().TxVoid(func(tx *sql.Tx, ctx context.Context, cancel context.CancelFunc) error {
-		err := queries.UpdateRefreshToken(tx, ctx, claims.Uuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
-		if err == sql.ErrNoRows {
-			err = queries.CreateRefreshToken(tx, ctx, claims.Uuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
-		}
-
-		return err
-	})()
+	err = services.Instance().Tokens().UpsertRefreshToken(claims.Uuid, (*result).RefreshToken, (*result).RefreshTokenExpiredAt.Time)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Internal server error")
