@@ -10,7 +10,7 @@
 
     <changeSet  id="1"  author="voronov">
         <createTable tableName="refresh_tokens">
-            <column name="user_uuid" type="varchar(36)">
+            <column name="user_uuid" type="uuid">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="token" type="varchar(400)">
@@ -22,14 +22,9 @@
             <column name="create_date" type="timestamp">
                 <constraints nullable="false"/>
             </column>
-        </createTable>
-        <addUniqueConstraint tableName="refresh_tokens" columnNames="user_uuid" constraintName="refresh_tokens_user_uuid_unique" />
-        <sql dbms="postgresql">
-            CREATE INDEX refresh_tokens_user_uuid_hash_index ON refresh_tokens USING HASH (user_uuid);
-        </sql>
-        <addUniqueConstraint tableName="refresh_tokens" columnNames="token" constraintName="refresh_tokens_token_unique" />        
+        </createTable>  
         <rollback>
             <dropTable tableName="refresh_tokens"/>
-        </rollback>
+        </rollback> 
     </changeSet>
 </databaseChangeLog>
