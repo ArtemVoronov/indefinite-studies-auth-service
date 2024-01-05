@@ -51,6 +51,7 @@ func CreateRefreshToken(tx *sql.Tx, ctx context.Context, userUuid string, token 
 	if err != nil {
 		return fmt.Errorf("error at creating refresh token, case after preparing statement: %s", err)
 	}
+	defer stmt.Close()
 
 	_, err = stmt.ExecContext(ctx, userUuid, token, expireAt, createDate)
 	if err != nil {
@@ -69,6 +70,7 @@ func UpdateRefreshToken(tx *sql.Tx, ctx context.Context, userUuid string, token 
 	if err != nil {
 		return fmt.Errorf("error at updating refresh token, case after preparing statement: %s", err)
 	}
+	defer stmt.Close()
 	res, err := stmt.ExecContext(ctx, userUuid, token, expireAt, createDate)
 	if err != nil {
 		return fmt.Errorf("error at updating refresh token '%s', case after executing statement: %s", token, err)
@@ -90,6 +92,7 @@ func DeleteRefreshToken(tx *sql.Tx, ctx context.Context, userUuid string) error 
 	if err != nil {
 		return fmt.Errorf("error at deleting refresh token, case after preparing statement: %s", err)
 	}
+	defer stmt.Close()
 	res, err := stmt.ExecContext(ctx, userUuid)
 	if err != nil {
 		return fmt.Errorf("error at deleting refresh token by user uuid '%v', case after executing statement: %s", userUuid, err)
