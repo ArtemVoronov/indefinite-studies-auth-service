@@ -74,12 +74,12 @@ func (s *JWTService) GenerateNewTokenPair(uuid string, tokenType string, role st
 
 	accessToken, err := s.createToken(expireAtForAccessToken, uuid, tokenType, role, "access")
 	if err != nil {
-		return result, fmt.Errorf("error token pair generation: %v", err)
+		return result, fmt.Errorf("error token pair generation: %w", err)
 	}
 
 	refreshToken, err := s.createToken(expireAtForRefreshToken, uuid, tokenType, role, "refresh")
 	if err != nil {
-		return result, fmt.Errorf("error token pair generation: %v", err)
+		return result, fmt.Errorf("error token pair generation: %w", err)
 	}
 
 	result = &AuthenicationResultDTO{

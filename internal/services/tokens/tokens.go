@@ -3,6 +3,7 @@ package tokens
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -36,7 +37,7 @@ func (s *TokensService) Shutdown() error {
 		}
 	}
 	if len(result) > 0 {
-		return fmt.Errorf("errors during shutdown: %v", result)
+		return errors.Join(result...)
 	}
 	return nil
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/services/auth"
 	"github.com/ArtemVoronov/indefinite-studies-utils/pkg/utils"
 	"github.com/gin-contrib/expvar"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -42,6 +43,7 @@ func shutdown() {
 
 func createRestApi(logger *logrus.Logger) *gin.Engine {
 	router := gin.Default()
+	pprof.Register(router)
 	gin.SetMode(app.Mode())
 	router.Use(app.Cors())
 	router.Use(app.NewLoggerMiddleware(logger))

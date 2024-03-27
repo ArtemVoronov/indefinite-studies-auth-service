@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/ArtemVoronov/indefinite-studies-utils v0.0.0-20240319140036-a53466828537
 	github.com/gin-contrib/expvar v0.0.1
+	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/sirupsen/logrus v1.9.0
